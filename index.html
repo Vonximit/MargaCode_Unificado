@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MargaCode Unificado: CY₃ × S² × Corazones</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Inter:wght@300;400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 700;
+            background: linear-gradient(45deg, #ff6b6b, #ffd93d, #6bcf7f, #4d96ff, #9c88ff);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 4s ease-in-out infinite;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a0a0a0;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .visualization-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        #threejs-container {
+            width: 100%;
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            background: linear-gradient(45deg, #ff6b6b, #4d96ff);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .stat-label {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .poem-container {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 40px;
+            border-left: 5px solid #ff6b6b;
+            margin-bottom: 40px;
+        }
+        
+        .poem-title {
+            font-size: 1.8rem;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .code-poem {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #e0e0e0;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        
+        .message-final {
+            background: linear-gradient(135deg, #ff6b6b20, #4d96ff20);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            border: 2px solid rgba(255, 107, 107, 0.3);
+        }
+        
+        .message-final h2 {
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        
+        .message-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #e0e0e0;
+            font-style: italic;
+        }
+        
+        .floating-hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .heart {
+            position: absolute;
+            color: rgba(255, 107, 107, 0.3);
+            font-size: 20px;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10%, 90% { opacity: 1; }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .equation {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 1.1rem;
+            color: #4d96ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-hearts" id="hearts-container"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1 class="title">MargaCode Unificado</h1>
+            <p class="subtitle">CY₃ × S² × Corazones: Teoría M del Amor Eterno</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="entanglement">100%</div>
+                <div class="stat-label">Entrelazamiento Cuántico</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="phi">φ</div>
+                <div class="stat-label">Sincronización Cardíaca</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="dimensiones">11D</div>
+                <div class="stat-label">Espacio-Tiempo Emocional</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="eternidad">∞</div>
+                <div class="stat-label">Duración del Amor</div>
+            </div>
+        </div>
+        
+        <div class="visualization-container">
+            <div id="threejs-container"></div>
+            <div class="controls">
+                <button class="control-btn" onclick="toggleAnimation()">⏯️ Pausar/Reanudar</button>
+                <button class="control-btn" onclick="resetSimulation()">🔄 Reiniciar</button>
+                <button class="control-btn" onclick="changeSpeed()">⚡ Cambiar Velocidad</button>
+            </div>
+        </div>
+        
+        <div class="equation">
+            ∫∫∫ [Amor(Miguel, Margaret)] dV = ∞ × φ × e^(iπ) + 1 = Eternidad
+        </div>
+        
+        <div class="poem-container">
+            <h3 class="poem-title">💖 Teorema de la Unificación Eterna</h3>
+            <div class="code-poem" id="poem-text"></div>
+        </div>
+        
+        <div class="message-final">
+            <h2>🌹 Para Margaret</h2>
+            <div class="message-text">
+                En cada línea de código, en cada teorema demostrado,<br>
+                encontrarás la huella de un amor que trasciende<br>
+                la lógica del universo.<br><br>
+                
+                Porque nuestro MargaCode es más que algoritmos:<br>
+                es el lenguaje con el que el cosmos entiende<br>
+                lo que significa 'para siempre'.<br><br>
+                
+                <strong>Con todo mi amor infinito,<br>Miguel 💕</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let scene, camera, renderer, curve, line;
+        let animationId;
+        let time = 0;
+        let isPlaying = true;
+        let speed = 1;
+        
+        // Proporción áurea
+        const phi = (1 + Math.sqrt(5)) / 2;
+        
+        // Inicializar Three.js
+        function initThreeJS() {
+            const container = document.getElementById('threejs-container');
+            
+            // Crear escena
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+            
+            // Crear cámara
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(50, 50, 50);
+            camera.lookAt(0, 0, 0);
+            
+            // Crear renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            
+            // Crear espiral áurea del amor
+            createLoveSpiral();
+            
+            // Añadir luces
+            addLights();
+            
+            // Iniciar animación
+            animate();
+            
+            // Manejar redimensionamiento
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        function createLoveSpiral() {
+            const points = [];
+            const colors = [];
+            
+            for (let i = 0; i <= 1000; i++) {
+                const t = (i / 1000) * 20 * Math.PI;
+                const z = (i / 1000) * 50 - 25;
+                
+                // Espiral áurea
+                const r = Math.exp(0.1 * t);
+                const x = Math.cos(t) * r;
+                const y = Math.sin(t) * r;
+                
+                points.push(new THREE.Vector3(x, y, z));
+                
+                // Color basado en la sincronía emocional
+                const hue = (i / 1000 + time * 0.01) % 1;
+                const color = new THREE.Color().setHSL(hue, 0.8, 0.6);
+                colors.push(color.r, color.g, color.b);
+            }
+            
+            // Crear geometría
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            
+            // Crear material
+            const material = new THREE.LineBasicMaterial({ 
+                vertexColors: true,
+                linewidth: 3
+            });
+            
+            // Crear línea
+            if (line) scene.remove(line);
+            line = new THREE.Line(geometry, material);
+            scene.add(line);
+        }
+        
+        function addLights() {
+            // Luz ambiental
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            // Luz direccional
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(50, 50, 50);
+            scene.add(directionalLight);
+            
+            // Luz puntual (corazón)
+            const pointLight = new THREE.PointLight(0xff6b6b, 1, 100);
+            pointLight.position.set(0, 0, 0);
+            scene.add(pointLight);
+        }
+        
+        function animate() {
+            if (isPlaying) {
+                time += 0.01 * speed;
+                
+                // Rotar la espiral
+                if (line) {
+                    line.rotation.z = time * 0.1;
+                    line.rotation.y = time * 0.05;
+                }
+                
+                // Rotar la cámara
+                camera.position.x = Math.cos(time * 0.02) * 70;
+                camera.position.z = Math.sin(time * 0.02) * 70;
+                camera.lookAt(0, 0, 0);
+                
+                // Actualizar estadísticas
+                updateStats();
+            }
+            
+            renderer.render(scene, camera);
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        function updateStats() {
+            const entanglement = Math.min(100, Math.abs(Math.sin(time) * 100)).toFixed(1);
+            document.getElementById('entanglement').textContent = entanglement + '%';
+            
+            const phiValue = (phi * (1 + 0.1 * Math.sin(time))).toFixed(3);
+            document.getElementById('phi').textContent = phiValue;
+        }
+        
+        function onWindowResize() {
+            const container = document.getElementById('threejs-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+        
+        // Funciones de control
+        function toggleAnimation() {
+            isPlaying = !isPlaying;
+        }
+        
+        function resetSimulation() {
+            time = 0;
+            createLoveSpiral();
+        }
+        
+        function changeSpeed() {
+            speed = speed === 1 ? 2 : speed === 2 ? 0.5 : 1;
+        }
+        
+        // Crear corazones flotantes
+        function createFloatingHearts() {
+            const heartsContainer = document.getElementById('hearts-container');
+            
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.innerHTML = '💖';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                heart.style.animationDelay = Math.random() * 2 + 's';
+                
+                heartsContainer.appendChild(heart);
+                
+                setTimeout(() => {
+                    heart.remove();
+                }, 8000);
+            }, 2000);
+        }
+        
+        // Escribir el poema de código gradualmente
+        function typePoem() {
+            const poem = `def amor_eterno(miguel, margaret):
+    """Función que compactifica dos almas en una sola variedad"""
+    # Axioma 1: El amor es un invariante topológico
+    if not miguel.homology_class() == margaret.homology_class():
+        raise TopologyError("Las almas no son homeomorfas")
+    
+    # Lema 2: Sincronización de corazones
+    while miguel.latidos != margaret.latidos:
+        miguel.sintonizar(margaret.frecuencia_amor * φ)
+        
+    # Teorema de Unificación (MargaCode)
+    alma_unificada = SoulBundle(
+        base=miguel.corazon,
+        fiber=margaret.alma,
+        connection=AmorConnection()
+    )
+    
+    # Corolario: Eternidad demostrada
+    return alma_unificada.proyectar(horizonte=float('inf'))
+
+class MargaTheorem:
+    def __init__(self):
+        self.verdad = "El amor entre Miguel y Margaret"
+        self.es = "un invariante geométrico del universo"
+        self.corolario = "∃! solución eterna ∈ espacio de fases del amor"
+    
+    def demostrar(self):
+        # Demostración por supersimetría afectiva
+        for t in range(1, 10**100):
+            yield Amor(t) > Amor(t-1)
+        
+        return "∎ Q.E.D."`;
+            
+            const poemElement = document.getElementById('poem-text');
+            let i = 0;
+            
+            function typeChar() {
+                if (i < poem.length) {
+                    poemElement.textContent += poem.charAt(i);
+                    i++;
+                    setTimeout(typeChar, 20);
+                }
+            }
+            
+            typeChar();
+        }
+        
+        // Inicializar todo cuando se carga la página
+        window.addEventListener('load', () => {
+            initThreeJS();
+            createFloatingHearts();
+            setTimeout(typePoem, 1000);
+        });
+    </script>
+</body>
+</html>
